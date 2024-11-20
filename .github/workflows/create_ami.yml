@@ -7,9 +7,12 @@ on:
         description: "Server IP address"
         required: true
       environment:
-        description: "Environment (staging/production)"
+        description: "Environment"
         required: true
-        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
 
 jobs:
   create-ami:
@@ -32,9 +35,13 @@ jobs:
       id: get_instance_id
       run: |
         echo "Fetching instance ID for IP: ${{ github.event.inputs.server_ip }} in environment: ${{ github.event.inputs.environment }}..."
-        # Replace the command below with actual logic to resolve the instance ID using the server IP and environment.
-        # In this example, we mock an instance ID. Replace it with your logic.
-        echo "::set-output name=instance_id::i-0abcdef1234567890"
+        # Replace with actual logic to fetch instance ID
+        INSTANCE_ID="i-0abcdef1234567890"  # Placeholder instance ID
+        if [ -z "$INSTANCE_ID" ]; then
+          echo "Error: Instance ID could not be fetched."
+          exit 1
+        fi
+        echo "::set-output name=instance_id::$INSTANCE_ID"
       shell: bash
 
     - name: Run Python Script to Create AMI
@@ -43,4 +50,5 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: us-east-1
       run: |
-        python scripts/create_ami.py --instance-id ${{ steps.get_instance_id.outputs.instance_id }}
+        python create_ami.py --instance-id ${{ steps.get_instance_id.outputs.instance_id }}
+      continue-on-error: false  # Explicitly fail if the script returns a non-zero exit code
