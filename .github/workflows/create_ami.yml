@@ -16,8 +16,12 @@ on:
           - production
       aws_region:
         description: "AWS Region"
-        required: false
+        required: true
         default: "eu-central-1"
+        type: choice
+        options:
+          - eu-central-1
+          - us-east-1
       aws_role:
         description: "AWS Role to assume"
         required: false
@@ -45,22 +49,17 @@ jobs:
       run: |
         if [ "${{ github.event.inputs.environment }}" == "staging" ]; then
           echo "AWS Role: arn:aws:iam::034362028102:role/github_oidc_role"
-          echo "AWS Region: eu-central-1"
+          echo "AWS Region: ${{ github.event.inputs.aws_region }}"
           echo "AWS_ROLE=arn:aws:iam::034362028102:role/github_oidc_role" >> $GITHUB_ENV
-          echo "AWS_REGION=eu-central-1" >> $GITHUB_ENV
+          echo "AWS_REGION=${{ github.event.inputs.aws_region }}" >> $GITHUB_ENV
         elif [ "${{ github.event.inputs.environment }}" == "production" ]; then
           echo "AWS Role: arn:aws:iam::327685137044:role/prod_github_oidc_role"
-          echo "AWS Region: eu-central-1"
+          echo "AWS Region: ${{ github.event.inputs.aws_region }}"
           echo "AWS_ROLE=arn:aws:iam::327685137044:role/prod_github_oidc_role" >> $GITHUB_ENV
-          echo "AWS_REGION=eu-central-1" >> $GITHUB_ENV
+          echo "AWS_REGION=${{ github.event.inputs.aws_region }}" >> $GITHUB_ENV
         else
           echo "Error: Unknown environment"
           exit 1
-        fi
-
-        if [ -n "${{ github.event.inputs.aws_region }}" ]; then
-          echo "Overriding AWS Region to ${{ github.event.inputs.aws_region }}"
-          echo "AWS_REGION=${{ github.event.inputs.aws_region }}" >> $GITHUB_ENV
         fi
 
     - name: Configure AWS credentials
