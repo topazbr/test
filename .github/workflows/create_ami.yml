@@ -1,4 +1,4 @@
-name: Create AMI
+name: Validate Inputs and Create AMI
 
 on:
   workflow_dispatch:
@@ -16,9 +16,9 @@ on:
           - production
 
 jobs:
-  create-ami:
+  validate-and-create-ami:
     runs-on: ubuntu-latest
-    env:  # Define global environment variables for the job
+    env:  # Global environment variables
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_REGION: us-east-1
@@ -36,14 +36,29 @@ jobs:
       run: |
         python -m pip install --upgrade pip boto3
 
-    - name: Validate Server IP and Fetch Instance ID
+    - name: Validate Server IP
       id: validate_ip
       run: |
-        python create_ami.py --instance-ip ${{ github.event.inputs.server_ip }}
-      shell: bash
+        echo "Validating server IP: ${{ github.event.inputs.server_ip }}"
+
+        # Validate if input is a valid IP
+        if ! [[ "${{ github.event.inputs.server_ip }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "Error: Provided server IP is not in valid IPv4 format."
+          exit 1
+        fi
+        echo "Server IP is valid."
+
+    - name: Validate Instance on AWS
+      id: check_instance
+      run: |
+        echo "Validating instance for IP: ${{ github.event.inputs.server_ip }} in environment: ${{ github.event.inputs.environment }}"
+
+        # Run Python script to validate IP with AWS
+        python scripts/create_ami.py --instance-ip ${{ github.event.inputs.server_ip }}
+      continue-on-error: false
 
     - name: Create AMI
       if: ${{ success() }}
       run: |
-        # Replace this with the actual AMI creation logic
-        echo "AMI creation process for validated instance."
+        echo "Proceeding with AMI creation..."
+        # Replace this with AMI creation logic
