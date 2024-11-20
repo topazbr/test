@@ -1,0 +1,46 @@
+name: Create AMI
+
+on:
+  workflow_dispatch:
+    inputs:
+      server_ip:
+        description: "Server IP address"
+        required: true
+      environment:
+        description: "Environment (staging/production)"
+        required: true
+        default: "staging"
+
+jobs:
+  create-ami:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip boto3
+
+    - name: Extract instance ID
+      id: get_instance_id
+      run: |
+        echo "Fetching instance ID for IP: ${{ github.event.inputs.server_ip }} in environment: ${{ github.event.inputs.environment }}..."
+        # Replace the command below with actual logic to resolve the instance ID using the server IP and environment.
+        # In this example, we mock an instance ID. Replace it with your logic.
+        echo "::set-output name=instance_id::i-0abcdef1234567890"
+      shell: bash
+
+    - name: Run Python Script to Create AMI
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: us-east-1
+      run: |
+        python scripts/create_ami.py --instance-id ${{ steps.get_instance_id.outputs.instance_id }}
